@@ -35,6 +35,7 @@ add_link_options(-pipe ${MCU_FLAGS} -T${LINKER_SCRIPT} -Wl,--no-warn-rwx-segment
                  -lm -lc -lnosys # lib options
                  -Wl,--gc-sections -flto -specs=nano.specs -specs=nosys.specs # optimize options
                  -Wl,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map -Wl,--cref -Wl,--print-memory-usage # map options
+                 -u _printf_float  #  让 printf 支持浮点数
                  ) # if your executable is too large , try option '-s' to strip symbols
 
 # add_compile_definitions() works for compile stage

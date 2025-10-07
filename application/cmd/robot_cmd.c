@@ -9,6 +9,7 @@
 #include "general_def.h"
 #include "dji_motor.h"
 #include "bmi088.h"
+#include "vofa.h"
 // bsp
 #include "bsp_dwt.h"
 #include "bsp_log.h"
@@ -20,6 +21,7 @@
 /* cmd应用包含的模块实例指针和交互信息存储*/
 #ifdef GIMBAL_BOARD // 对双板的兼容,条件编译
 #include "can_comm.h"
+
 static CANCommInstance *cmd_can_comm; // 双板通信
 #endif
 #ifdef ONE_BOARD
@@ -48,6 +50,11 @@ static Robot_Status_e robot_state; // 机器人整体工作状态
 
 BMI088Instance *bmi088_test; // 云台IMU
 BMI088_Data_t bmi088_data;
+
+static float vofa_debug[5];  //调试使用
+
+
+
 void RobotCMDInit()
 {
     // BMI088_Init_Config_s bmi088_config = {
@@ -92,12 +99,19 @@ void RobotCMDInit()
     // };
     //bmi088_test = BMI088Register(&bmi088_config);
    rc_data = RemoteControlInit(&huart3);   // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
-    vision_recv_data = VisionInit(&huart1); // 视觉通信串口
+    vision_recv_data = VisionInit(&huart1); // 视觉通信
+    Vofa_Uart_Init(&huart6);        // vofa调试
+
+
 
     gimbal_cmd_pub = PubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
     gimbal_feed_sub = SubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
     shoot_cmd_pub = PubRegister("shoot_cmd", sizeof(Shoot_Ctrl_Cmd_s));
     shoot_feed_sub = SubRegister("shoot_feed", sizeof(Shoot_Upload_Data_s));
+
+
+
+
 
 #ifdef ONE_BOARD // 双板兼容
     chassis_cmd_pub = PubRegister("chassis_cmd", sizeof(Chassis_Ctrl_Cmd_s));
@@ -116,6 +130,7 @@ void RobotCMDInit()
     cmd_can_comm = CANCommInit(&comm_conf);
 #endif // GIMBAL_BOARD
     gimbal_cmd_send.pitch = 0;
+
 
     robot_state = ROBOT_READY; // 启动时机器人进入工作模式,后续加入所有应用初始化完成之后再进入
 }
@@ -151,6 +166,7 @@ static void CalcOffsetAngle()
  * @brief 控制输入为遥控器(调试时)的模式和控制量设置
  *
  */
+// 遥控器左侧开关状态为[下],遥控器控制
 static void RemoteControlSet()
 {
     // 控制底盘和云台运行模式,云台待添加,云台是否始终使用IMU数据?
@@ -174,8 +190,8 @@ static void RemoteControlSet()
     // 左侧开关状态为[下],或视觉未识别到目标,纯遥控器拨杆控制
     if (switch_is_down(rc_data[TEMP].rc.switch_left) || vision_recv_data->target_state == NO_TARGET)
     { // 按照摇杆的输出大小进行角度增量,增益系数需调整
-        gimbal_cmd_send.yaw += 0.005f * (float)rc_data[TEMP].rc.rocker_l_;
-        gimbal_cmd_send.pitch += 0.001f * (float)rc_data[TEMP].rc.rocker_l1;
+        gimbal_cmd_send.yaw += 0.0005f * (float)rc_data[TEMP].rc.rocker_l_;//0.005
+        gimbal_cmd_send.pitch += 0.0001f * (float)rc_data[TEMP].rc.rocker_l1;//0.001
     }
     // 云台软件限位
 
@@ -287,6 +303,26 @@ static void MouseKeySet()
     }
 }
 
+static void Vofa_Send()
+{
+  vofa_debug[0] = gimbal_fetch_data.gimbal_imu_data.Yaw;
+  vofa_debug[1] = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
+  vofa_debug[2] = gimbal_fetch_data.gimbal_imu_data.Pitch;
+
+  vofa_debug[3] = gimbal_cmd_send.yaw;
+  vofa_debug[4] = gimbal_cmd_send.pitch;
+
+
+
+//  vofa_justfloat_output(vofa_debug,5,&huart6);
+//  Vofa_Send_Data(vofa_debug,5);
+  hhSerial_Printf("%f,%f,%f,%f,%f\n", vofa_debug[0], vofa_debug[1], vofa_debug[2]
+                  ,vofa_debug[3],vofa_debug[4]);
+
+
+
+}
+
 /**
  * @brief  紧急停止,包括遥控器左上侧拨轮打满/重要模块离线/双板通信失效等
  *         停止的阈值'300'待修改成合适的值,或改为开关控制.
@@ -334,9 +370,17 @@ void RobotCMDTask()
     CalcOffsetAngle();
     // 根据遥控器左侧开关,确定当前使用的控制模式为遥控器调试还是键鼠
     if (switch_is_down(rc_data[TEMP].rc.switch_left)) // 遥控器左侧开关状态为[下],遥控器控制
-        RemoteControlSet();
+    {
+      RemoteControlSet();
+    }
+
     else if (switch_is_up(rc_data[TEMP].rc.switch_left)) // 遥控器左侧开关状态为[上],键盘控制
-        MouseKeySet();
+    {
+      MouseKeySet();
+    }
+
+    Vofa_Send();//调试使用
+
 
     EmergencyHandler(); // 处理模块离线和遥控器急停等紧急情况
 

@@ -72,4 +72,7 @@ void USARTSend(USARTInstance *_instance, uint8_t *send_buf, uint16_t send_size,U
  */
 uint8_t USARTIsReady(USARTInstance *_instance);
 
+void hhSerial_SendByte(uint8_t Byte);
+void hhSerial_SendString(char *str);
+
 #endif

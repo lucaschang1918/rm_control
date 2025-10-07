@@ -10,10 +10,12 @@
  */
 #include "bsp_usart.h"
 #include "bsp_log.h"
-#include "stdlib.h"
 #include "memory.h"
+#include "stdlib.h"
+#include "usart.h"
 
-/* usart service instance, modules' info would be recoreded here using USARTRegister() */
+/* usart service instance, modules' info would be recoreded here using
+ * USARTRegister() */
 /* usart服务实例,所有注册了usart的模块信息会被保存在这里 */
 static uint8_t idx;
 static USARTInstance *usart_instance[DEVICE_USART_CNT] = {NULL};
@@ -71,6 +73,8 @@ void USARTSend(USARTInstance *_instance, uint8_t *send_buf, uint16_t send_size, 
         break;
     case USART_TRANSFER_DMA:
         HAL_UART_Transmit_DMA(_instance->usart_handle, send_buf, send_size);
+
+
         break;
     default:
         while (1)
@@ -136,4 +140,17 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
             return;
         }
     }
+}
+
+void hhSerial_SendByte(uint8_t Byte)
+{
+  HAL_UART_Transmit(&huart6, &Byte, 1, HAL_MAX_DELAY);
+}
+// 发送字符串
+void hhSerial_SendString(char *str)
+{
+  for (uint16_t i = 0; str[i] != '\0'; i++)
+  {
+    hhSerial_SendByte(str[i]);
+  }
 }

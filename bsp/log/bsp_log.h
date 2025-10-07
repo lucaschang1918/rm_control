@@ -69,4 +69,5 @@ int PrintLog(const char *fmt, ...);
  */
 void Float2Str(char *str, float va);
 
+void hhSerial_Printf(char *format, ...);
 #endif
