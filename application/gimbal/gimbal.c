@@ -55,8 +55,8 @@ void GimbalInit() {
           },
       .controller_setting_init_config =
           {
-              .angle_feedback_source = MOTOR_FEED,
-              .speed_feedback_source = MOTOR_FEED,
+              .angle_feedback_source = OTHER_FEED,
+              .speed_feedback_source = OTHER_FEED,
               .outer_loop_type = ANGLE_LOOP,
               .close_loop_type = ANGLE_LOOP | SPEED_LOOP,
               .motor_reverse_flag = MOTOR_DIRECTION_NORMAL,
@@ -66,7 +66,7 @@ void GimbalInit() {
   Motor_Init_Config_s pitch_config = {
       .can_init_config =
           {
-              .can_handle = &hcan2,
+              .can_handle = &hcan1,
               .tx_id = 2,
           },
       .controller_param_init_config =
@@ -84,12 +84,12 @@ void GimbalInit() {
                   },
               .speed_PID =
                   {
-                      .Kp = 100,  // 50
+                      .Kp = 60,  // 50
                       .Ki = 10, // 350
                       .Kd = 0,   // 0
                       .Improve = PID_Trapezoid_Intergral | PID_Integral_Limit |
                                  PID_Derivative_On_Measurement,
-                      .IntegralLimit = 500,//2500
+                      .IntegralLimit = 0,//2500
                       .MaxOut = 3000,//20000
                   },
               .other_angle_feedback_ptr = &gimba_IMU_data->Pitch,
@@ -98,8 +98,8 @@ void GimbalInit() {
           },
       .controller_setting_init_config =
           {
-              .angle_feedback_source = MOTOR_FEED,
-              .speed_feedback_source = MOTOR_FEED,
+              .angle_feedback_source = OTHER_FEED,
+              .speed_feedback_source = OTHER_FEED,
               .outer_loop_type = ANGLE_LOOP,
               .close_loop_type = SPEED_LOOP | ANGLE_LOOP,
               .motor_reverse_flag = MOTOR_DIRECTION_NORMAL,

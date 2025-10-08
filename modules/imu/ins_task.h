@@ -23,6 +23,10 @@
 #define Y 1
 #define Z 2
 
+#define Heng_Fang 0
+#define Shu_Fang  1
+
+
 #define INS_TASK_PERIOD 1
 
 typedef struct
