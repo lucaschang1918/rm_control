@@ -115,11 +115,17 @@ void VisionSend()
 #include "bsp_usb.h"
 static uint8_t *vis_recv_buff;
 
+//static void DecodeVision(uint16_t recv_len)
+//{
+//    uint16_t flag_register;
+//    get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
+//    // TODO: code to resolve flag_register;
+//}
 static void DecodeVision(uint16_t recv_len)
 {
-    uint16_t flag_register;
-    get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
-    // TODO: code to resolve flag_register;
+  uint16_t flag_register;
+  get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
+  // TODO: code to resolve flag_register;
 }
 
 /* 视觉通信初始化 */
@@ -140,16 +146,27 @@ Vision_Recv_s *VisionInit(UART_HandleTypeDef *_handle)
     return &recv_data;
 }
 
-void VisionSend()
-{
-    static uint16_t flag_register;
-    static uint8_t send_buff[VISION_SEND_SIZE];
-    static uint16_t tx_len;
-    // TODO: code to set flag_register
-    flag_register = 30 << 8 | 0b00000001;
-    // 将数据转化为seasky协议的数据包
-    get_protocol_send_data(0x02, flag_register, &send_data.yaw, 3, send_buff, &tx_len);
-    USBTransmit(send_buff, tx_len);
+//void VisionSend()
+//{
+//    static uint16_t flag_register;
+//    static uint8_t send_buff[VISION_SEND_SIZE];
+//    static uint16_t tx_len;
+//    // TODO: code to set flag_register
+//    flag_register = 30 << 8 | 0b00000001;
+//    // 将数据转化为seasky协议的数据包
+//    get_protocol_send_data(0x02, flag_register, &send_data.yaw, 3, send_buff, &tx_len);
+//    USBTransmit(send_buff, tx_len);
+//}
+
+void VisionSend(){
+
 }
+
+
+void VisionDebug(uint8_t *buffer, uint16_t len)
+{
+  USBTransmit(buffer, len);
+}
+
 
 #endif // VISION_USE_VCP

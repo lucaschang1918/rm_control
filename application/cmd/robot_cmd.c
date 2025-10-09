@@ -14,6 +14,9 @@
 #include "bsp_dwt.h"
 #include "bsp_log.h"
 
+
+#include "usbd_cdc_if.h"
+
 // 私有宏,自动将编码器转换成角度值
 #define YAW_ALIGN_ANGLE (YAW_CHASSIS_ALIGN_ECD * ECD_ANGLE_COEF_DJI) // 对齐时的角度,0-360
 #define PTICH_HORIZON_ANGLE (PITCH_HORIZON_ECD * ECD_ANGLE_COEF_DJI) // pitch水平时电机的角度,0-360
@@ -128,7 +131,7 @@ void RobotCMDInit()
     };
     cmd_can_comm = CANCommInit(&comm_conf);
 #endif // GIMBAL_BOARD
-    gimbal_cmd_send.pitch = 0;
+//    gimbal_cmd_send.pitch = 0;
 
 
     robot_state = ROBOT_READY; // 启动时机器人进入工作模式,后续加入所有应用初始化完成之后再进入
@@ -190,10 +193,19 @@ static void RemoteControlSet()
     if (switch_is_down(rc_data[TEMP].rc.switch_left) || vision_recv_data->target_state == NO_TARGET)
     { // 按照摇杆的输出大小进行角度增量,增益系数需调整
         gimbal_cmd_send.yaw += 0.005f * (float)rc_data[TEMP].rc.rocker_l_;//0.005
-        gimbal_cmd_send.pitch += 0.0001f * (float)rc_data[TEMP].rc.rocker_l1;//0.001
+        gimbal_cmd_send.pitch += 0.001f * (float)rc_data[TEMP].rc.rocker_l1;//0.001
 
     }
+
     // 云台软件限位
+    gimbal_cmd_send.pitch = gimbal_cmd_send.pitch > 60.0f ? 60.0f :
+                                                          (gimbal_cmd_send.pitch < -60.0f ? -60.0f : gimbal_cmd_send.pitch);
+
+    gimbal_cmd_send.yaw = gimbal_cmd_send.yaw > 60.0f ? 60.0f :
+                                                          (gimbal_cmd_send.yaw < -60.0f ? -60.0f : gimbal_cmd_send.yaw);
+
+
+
 
     // 底盘参数,目前没有加入小陀螺(调试似乎暂时没有必要),系数需要调整
     chassis_cmd_send.vx = 10.0f * (float)rc_data[TEMP].rc.rocker_r_; // _水平方向
@@ -312,9 +324,6 @@ static void Vofa_Send()
   vofa_debug[3] = gimbal_cmd_send.yaw;
   vofa_debug[4] = gimbal_cmd_send.pitch;
 
-
-//  vofa_justfloat_output(vofa_debug,5,&huart6);
-//  Vofa_Send_Data(vofa_debug,5);
   hhSerial_Printf("%f,%f,%f,%f,%f\n", vofa_debug[0], vofa_debug[1], vofa_debug[2]
                   ,vofa_debug[3],vofa_debug[4]);
 
@@ -375,6 +384,9 @@ void RobotCMDTask()
     {
       MouseKeySet();
     }
+
+//    gimbal_cmd_send.yaw = 20;//0.005
+//    gimbal_cmd_send.pitch = 0;//0.001
 
     Vofa_Send();//调试使用
 

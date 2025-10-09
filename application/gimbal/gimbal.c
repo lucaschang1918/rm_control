@@ -84,12 +84,12 @@ void GimbalInit() {
                   },
               .speed_PID =
                   {
-                      .Kp = 60,  // 50
+                      .Kp = 100,  // 50
                       .Ki = 10, // 350
                       .Kd = 0,   // 0
                       .Improve = PID_Trapezoid_Intergral | PID_Integral_Limit |
                                  PID_Derivative_On_Measurement,
-                      .IntegralLimit = 0,//2500
+                      .IntegralLimit = 500,//2500
                       .MaxOut = 3000,//20000
                   },
               .other_angle_feedback_ptr = &gimba_IMU_data->Pitch,

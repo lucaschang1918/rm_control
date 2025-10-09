@@ -3,6 +3,7 @@
 
 #include "bsp_usart.h"
 #include "seasky_protocol.h"
+#include <stdbool.h>
 
 #define VISION_RECV_SIZE 18u // 当前为固定值,36字节
 #define VISION_SEND_SIZE 36u
@@ -93,6 +94,7 @@ Vision_Recv_s *VisionInit(UART_HandleTypeDef *_handle);
  *
  */
 void VisionSend();
+void VisionDebug(uint8_t *buffer, uint16_t len);
 
 /**
  * @brief 设置视觉发送标志位
@@ -110,5 +112,41 @@ void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Spee
  * @param pitch
  */
 void VisionSetAltitude(float yaw, float pitch, float roll);
+
+
+//电砖的通信
+struct ReceiverPacket{
+  uint8_t header ;    //数据包头
+  bool  state : 1 ;   //识别状态 如果是1 就是tracking状态 否则没追踪到
+  uint8_t id : 3;     //数字是多少就是多少 哨兵是6  没识别到就是0
+
+  uint8_t armors_num : 3;   //装甲板数量
+  float x;
+  float y;
+  float z;
+  float yaw;
+
+  float vx;
+  float vy;
+  float vz;
+  float v_yaw;
+  float r1;
+  float r2;
+  float dz;
+
+}__attribute__((packed));
+
+struct SendPacket{
+  uint8_t header;
+  uint8_t detect_color : 1;
+  uint8_t task_mode : 2;
+  float roll;
+  float pitch ;
+  float yaw ;
+  float aim_x;
+  float aim_y;
+  float aim_z;
+  uint16_t checksum;
+}__attribute((packed));
 
 #endif // !MASTER_PROCESS_H

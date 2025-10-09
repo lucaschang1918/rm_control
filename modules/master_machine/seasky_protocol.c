@@ -54,7 +54,7 @@ static uint8_t protocol_heade_Check(protocol_rm_struct *pro, uint8_t *rx_buf)
     if (rx_buf[0] == PROTOCOL_CMD_ID)
     {
         pro->header.sof = rx_buf[0];
-        if (CRC8_Check_Sum(&rx_buf[0], 4))
+        if (CRC16_Check_Sum(&rx_buf[0], 4))
         {
             pro->header.data_length = (rx_buf[2] << 8) | rx_buf[1];
             pro->header.crc_check = rx_buf[3];

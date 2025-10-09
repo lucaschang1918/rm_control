@@ -125,6 +125,7 @@ void INS_Task(void) {
   if ((count % 1) == 0) {
     BMI088_Read(&BMI088);
 
+    //根据C板放的位置选择
 #if (Heng_Fang == 1)
     INS.Accel[X] = BMI088.Accel[X];
     INS.Accel[Y] = BMI088.Accel[Y];
