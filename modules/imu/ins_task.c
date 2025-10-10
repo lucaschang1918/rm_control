@@ -135,15 +135,17 @@ void INS_Task(void) {
     INS.Gyro[Z] = BMI088.Gyro[Z];
 #endif
 
-#if (Shu_Fang == 1)
+//pitch抬头负低头正 yaw左转正右转负
+#if (Shu_Fang==1)
     INS.Accel[X] = BMI088.Accel[Y];
     INS.Accel[Y] = -BMI088.Accel[X];
     INS.Accel[Z] = BMI088.Accel[Z];
-
     INS.Gyro[X] = BMI088.Gyro[Y];
     INS.Gyro[Y] = -BMI088.Gyro[X];
     INS.Gyro[Z] = BMI088.Gyro[Z];
 #endif
+
+
 
     // demo function,用于修正安装误差,可以不管,本demo暂时没用
     //        IMU_Param_Correction(&IMU_Param, INS.Gyro, INS.Accel);
@@ -180,7 +182,8 @@ void INS_Task(void) {
     INS.Roll = QEKF_INS.Roll;
     INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
 
-    VisionSetAltitude(INS.Yaw, INS.Pitch, INS.Roll);
+
+    VisionSetAltitude(INS.Yaw *DEGREE_2_RAD , INS.Pitch *DEGREE_2_RAD, INS.Roll *DEGREE_2_RAD);
   }
 
   // temperature control

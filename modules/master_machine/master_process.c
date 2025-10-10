@@ -13,10 +13,16 @@
 #include "daemon.h"
 #include "bsp_log.h"
 #include "robot_def.h"
+#include "crc_ref.h"
 
 static Vision_Recv_s recv_data;
 static Vision_Send_s send_data;
 static DaemonInstance *vision_daemon_instance;
+//=================================================
+//电专通信
+static ReceiverPacket rece_packet;
+static SendPacket send_packet;
+
 
 void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Speed_e bullet_speed)
 {
@@ -25,12 +31,6 @@ void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Spee
     send_data.bullet_speed = bullet_speed;
 }
 
-void VisionSetAltitude(float yaw, float pitch, float roll)
-{
-    send_data.yaw = yaw;
-    send_data.pitch = pitch;
-    send_data.roll = roll;
-}
 
 /**
  * @brief 离线回调函数,将在daemon.c中被daemon task调用
@@ -121,12 +121,17 @@ static uint8_t *vis_recv_buff;
 //    get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
 //    // TODO: code to resolve flag_register;
 //}
+
 static void DecodeVision(uint16_t recv_len)
 {
   uint16_t flag_register;
   get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
   // TODO: code to resolve flag_register;
 }
+
+
+
+
 
 /* 视觉通信初始化 */
 Vision_Recv_s *VisionInit(UART_HandleTypeDef *_handle)
@@ -158,15 +163,35 @@ Vision_Recv_s *VisionInit(UART_HandleTypeDef *_handle)
 //    USBTransmit(send_buff, tx_len);
 //}
 
+//imu解算赋值
+void VisionSetAltitude(float yaw, float pitch, float roll)
+{
+  //    send_data.yaw = yaw;
+  //    send_data.pitch = pitch;
+  //    send_data.roll = roll;
+  //===========================
+  send_packet.yaw = yaw;
+  send_packet.pitch = pitch;
+  send_packet.roll = roll;
+}
+
 void VisionSend(){
 
+    send_packet.header = 0x5A;
+    send_packet.detect_color = 0;  //0红 1蓝
+    send_packet.task_mode = 2;
+
+    send_packet.aim_x = 2.0f;
+    send_packet.aim_y = 0.0f;
+    send_packet.aim_z = 0.0f;
+
+    Append_CRC16_Check_Sum((uint8_t *)&send_packet,sizeof(send_packet));
+
+    USBTransmit((uint8_t *)&send_packet, sizeof(send_packet));
+
 }
 
 
-void VisionDebug(uint8_t *buffer, uint16_t len)
-{
-  USBTransmit(buffer, len);
-}
 
 
 #endif // VISION_USE_VCP

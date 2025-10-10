@@ -154,6 +154,7 @@ typedef struct
 { // 云台角度控制
     float yaw;
     float pitch;
+    float roll;
     float chassis_rotate_wz;
 
     gimbal_mode_e gimbal_mode;

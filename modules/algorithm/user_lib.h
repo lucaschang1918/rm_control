@@ -123,4 +123,9 @@ float AverageFilter(float new_data, float *buf, uint8_t len);
 
 #define rad_format(Ang) loop_float_constrain((Ang), -PI, PI)
 
+// 角度转弧度
+#define DEG2RAD(x)  ((x) * (M_PI / 180.0f))
+// 弧度转角度
+#define RAD2DEG(x)  ((x) * (180.0f / M_PI))
+
 #endif

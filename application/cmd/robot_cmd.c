@@ -192,8 +192,8 @@ static void RemoteControlSet()
     // 左侧开关状态为[下],或视觉未识别到目标,纯遥控器拨杆控制
     if (switch_is_down(rc_data[TEMP].rc.switch_left) || vision_recv_data->target_state == NO_TARGET)
     { // 按照摇杆的输出大小进行角度增量,增益系数需调整
-        gimbal_cmd_send.yaw += 0.005f * (float)rc_data[TEMP].rc.rocker_l_;//0.005
-        gimbal_cmd_send.pitch += 0.001f * (float)rc_data[TEMP].rc.rocker_l1;//0.001
+        gimbal_cmd_send.yaw +=  0.005f * (float)rc_data[TEMP].rc.rocker_l_;//0.005
+        gimbal_cmd_send.pitch +=  0.001f * (float)rc_data[TEMP].rc.rocker_l1;//0.001
 
     }
 
@@ -321,8 +321,9 @@ static void Vofa_Send()
   vofa_debug[1] = gimbal_fetch_data.gimbal_imu_data.YawTotalAngle;
   vofa_debug[2] = gimbal_fetch_data.gimbal_imu_data.Pitch;
 
-  vofa_debug[3] = gimbal_cmd_send.yaw;
-  vofa_debug[4] = gimbal_cmd_send.pitch;
+  vofa_debug[3] = gimbal_cmd_send.yaw ;
+  vofa_debug[4] = gimbal_cmd_send.pitch ;
+
 
   hhSerial_Printf("%f,%f,%f,%f,%f\n", vofa_debug[0], vofa_debug[1], vofa_debug[2]
                   ,vofa_debug[3],vofa_debug[4]);
@@ -385,8 +386,6 @@ void RobotCMDTask()
       MouseKeySet();
     }
 
-//    gimbal_cmd_send.yaw = 20;//0.005
-//    gimbal_cmd_send.pitch = 0;//0.001
 
     Vofa_Send();//调试使用
 

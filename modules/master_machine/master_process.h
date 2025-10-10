@@ -94,7 +94,7 @@ Vision_Recv_s *VisionInit(UART_HandleTypeDef *_handle);
  *
  */
 void VisionSend();
-void VisionDebug(uint8_t *buffer, uint16_t len);
+
 
 /**
  * @brief 设置视觉发送标志位
@@ -114,8 +114,8 @@ void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Spee
 void VisionSetAltitude(float yaw, float pitch, float roll);
 
 
-//电砖的通信
-struct ReceiverPacket{
+//电专的通信
+typedef struct ReceiverPacket_{
   uint8_t header ;    //数据包头
   bool  state : 1 ;   //识别状态 如果是1 就是tracking状态 否则没追踪到
   uint8_t id : 3;     //数字是多少就是多少 哨兵是6  没识别到就是0
@@ -134,19 +134,26 @@ struct ReceiverPacket{
   float r2;
   float dz;
 
-}__attribute__((packed));
+  uint16_t checksum;
 
-struct SendPacket{
-  uint8_t header;
-  uint8_t detect_color : 1;
+}__attribute__((packed)) ReceiverPacket;
+
+
+typedef struct SendPacket_{
+  uint8_t header;             //0x5A
+  uint8_t detect_color : 1;   //0红  1蓝
   uint8_t task_mode : 2;
-  float roll;
-  float pitch ;
-  float yaw ;
+
   float aim_x;
   float aim_y;
   float aim_z;
+
+  float roll;
+  float pitch ;
+  float yaw ;
+
   uint16_t checksum;
-}__attribute((packed));
+}__attribute((packed)) SendPacket;
+
 
 #endif // !MASTER_PROCESS_H
