@@ -137,10 +137,13 @@ static void DecodeVision(uint16_t recv_len)
     if (Verify_CRC16_Check_Sum(vis_recv_buff, sizeof(VisionRecvPacket)))
     {
       memcpy(&recv_packet, vis_recv_buff, sizeof(VisionRecvPacket));
-      hhSerial_Printf("NUC Packet OK: state=%d id=%d x=%.2f y=%.2f yaw=%.2f\r\n",
-             recv_packet.state, recv_packet.id,
-             recv_packet.x, recv_packet.y, recv_packet.yaw);
+//      hhSerial_Printf("NUC Packet OK: state=%d id=%d x=%.2f y=%.2f yaw=%.2f\r\n",
+//             recv_packet.state, recv_packet.id,
+//             recv_packet.x, recv_packet.y, recv_packet.yaw);
       // TODO: 在这里用 recv_data.x/y/z/yaw 做你的逻辑
+      send_packet.aim_x = 2.0f;
+      send_packet.aim_y = 0.0f;
+      send_packet.aim_z = 0.0f;
     }
     else
     {
@@ -210,9 +213,6 @@ void VisionSend(){
     send_packet.detect_color = 0;  //0红 1蓝
     send_packet.task_mode = 2;
 
-    send_packet.aim_x = 2.0f;
-    send_packet.aim_y = 0.0f;
-    send_packet.aim_z = 0.0f;
 
     Append_CRC16_Check_Sum((uint8_t *)&send_packet,sizeof(send_packet));
 

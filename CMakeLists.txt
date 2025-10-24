@@ -83,7 +83,7 @@ file(GLOB_RECURSE SOURCES
 set(ASM_SOURCES
     startup_stm32f407xx.s
     Middlewares/Third_Party/SEGGER/RTT/SEGGER_RTT_ASM_ARMv7M.s
-    )
+)
 set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
 # Build types
