@@ -11,75 +11,105 @@
 #pragma pack(1)
 typedef enum
 {
-	NO_FIRE = 0,
-	AUTO_FIRE = 1,
-	AUTO_AIM = 2
+  NO_FIRE = 0,
+  AUTO_FIRE = 1,
+  AUTO_AIM = 2
 } Fire_Mode_e;
 
 typedef enum
 {
-	NO_TARGET = 0,
-	TARGET_CONVERGING = 1,
-	READY_TO_FIRE = 2
+  NO_TARGET = 0,
+  TARGET_CONVERGING = 1,
+  READY_TO_FIRE = 2
 } Target_State_e;
 
 typedef enum
 {
-	NO_TARGET_NUM = 0,
-	HERO1 = 1,
-	ENGINEER2 = 2,
-	INFANTRY3 = 3,
-	INFANTRY4 = 4,
-	INFANTRY5 = 5,
-	OUTPOST = 6,
-	SENTRY = 7,
-	BASE = 8
+  NO_TARGET_NUM = 0,
+  HERO1 = 1,
+  ENGINEER2 = 2,
+  INFANTRY3 = 3,
+  INFANTRY4 = 4,
+  INFANTRY5 = 5,
+  OUTPOST = 6,
+  SENTRY = 7,
+  BASE = 8
 } Target_Type_e;
 
-typedef struct
-{
-	Fire_Mode_e fire_mode;
-	Target_State_e target_state;
-	Target_Type_e target_type;
 
-	float pitch;
-	float yaw;
-} Vision_Recv_s;
 
 typedef enum
 {
-	COLOR_NONE = 0,
-	COLOR_BLUE = 1,
-	COLOR_RED = 2,
+  COLOR_NONE = 0,
+  COLOR_BLUE = 1,
+  COLOR_RED = 2,
 } Enemy_Color_e;
 
 typedef enum
 {
-	VISION_MODE_AIM = 0,
-	VISION_MODE_SMALL_BUFF = 1,
-	VISION_MODE_BIG_BUFF = 2
+  VISION_MODE_AIM = 0,
+  VISION_MODE_SMALL_BUFF = 1,
+  VISION_MODE_BIG_BUFF = 2
 } Work_Mode_e;
 
 typedef enum
 {
-	BULLET_SPEED_NONE = 0,
-	BIG_AMU_10 = 10,
-	SMALL_AMU_15 = 15,
-	BIG_AMU_16 = 16,
-	SMALL_AMU_18 = 18,
-	SMALL_AMU_30 = 30,
+  BULLET_SPEED_NONE = 0,
+  BIG_AMU_10 = 10,
+  SMALL_AMU_15 = 15,
+  BIG_AMU_16 = 16,
+  SMALL_AMU_18 = 18,
+  SMALL_AMU_30 = 30,
 } Bullet_Speed_e;
+
+typedef struct ReceiverPacket_{
+  uint8_t header ;    //数据包头
+  bool  tracking : 1 ;   //识别状态 如果是1 就是tracking状态 否则没追踪到
+  uint8_t id : 3;     //数字是多少就是多少 哨兵是6  没识别到就是0
+
+  uint8_t reserved;
+
+  uint8_t armors_num : 3;   //装甲板数量
+  float x;
+  float y;
+  float z;
+  float yaw;
+
+  float vx;
+  float vy;
+  float vz;
+  float v_yaw;
+  float r1;
+  float r2;
+  float dz;
+
+  uint16_t checksum;
+
+}__attribute__((packed)) ReceiverPacket;
 
 typedef struct
 {
-	Enemy_Color_e enemy_color;
-	Work_Mode_e work_mode;
-	Bullet_Speed_e bullet_speed;
+  Enemy_Color_e enemy_color;
+  Work_Mode_e work_mode;
+  Bullet_Speed_e bullet_speed;
 
-	float yaw;
-	float pitch;
-	float roll;
+  float yaw;
+  float pitch;
+  float roll;
 } Vision_Send_s;
+
+typedef struct
+{
+  Fire_Mode_e fire_mode;
+  Target_State_e target_state;
+  Target_Type_e target_type;
+
+  float pitch;
+  float yaw;
+
+  ReceiverPacket *rec;
+
+} Vision_Recv_s;
 #pragma pack()
 
 /**
@@ -113,47 +143,33 @@ void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Spee
  */
 void VisionSetAltitude(float yaw, float pitch, float roll);
 
-
+//==============================================================//
+//==============================================================//
+//==============================================================//
+//==============================================================//
+//==============================================================//
 //电专的通信
-typedef struct ReceiverPacket_{
-  uint8_t header ;    //数据包头
-  bool  state : 1 ;   //识别状态 如果是1 就是tracking状态 否则没追踪到
-  uint8_t id : 3;     //数字是多少就是多少 哨兵是6  没识别到就是0
 
-  uint8_t armors_num : 3;   //装甲板数量
-  float x;
-  float y;
-  float z;
-  float yaw;
-
-  float vx;
-  float vy;
-  float vz;
-  float v_yaw;
-  float r1;
-  float r2;
-  float dz;
-
-  uint16_t checksum;
-
-}__attribute__((packed)) ReceiverPacket;
 
 
 typedef struct SendPacket_{
-  uint8_t header;             //0x5A
-  uint8_t detect_color : 1;   //0红  1蓝
+  uint8_t header;
+  uint8_t detect_color : 1; // 0-red 1-blue
   uint8_t task_mode : 2;
-
+  uint8_t reserved : 5;
+  float roll;
+  float pitch;
+  float yaw;
   float aim_x;
   float aim_y;
   float aim_z;
-
-  float roll;
-  float pitch ;
-  float yaw ;
-
   uint16_t checksum;
 }__attribute((packed)) SendPacket;
+
+
+
+
+extern float Vison_Frequency; // 视觉数据频率
 
 
 #endif // !MASTER_PROCESS_H
