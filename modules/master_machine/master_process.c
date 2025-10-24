@@ -14,6 +14,7 @@
 #include "bsp_log.h"
 #include "robot_def.h"
 #include "crc_ref.h"
+#include "slovetrajectory.h"
 
 static Vision_Recv_s recv_data;
 static Vision_Send_s send_data;
@@ -21,8 +22,8 @@ static DaemonInstance *vision_daemon_instance;
 //=================================================
 //电专通信
 //static ReceiverPacket rece_packet;
-static SendPacket send_packet;
-static VisionRecvPacket recv_packet;
+ SendPacket send_packet;
+ VisionRecvPacket recv_packet;
 
 void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Speed_e bullet_speed)
 {
@@ -114,6 +115,7 @@ void VisionSend()
 
 #include "bsp_usb.h"
 static uint8_t *vis_recv_buff;
+uint8_t visionGetDate=0;
 
 //static void DecodeVision(uint16_t recv_len)
 //{
@@ -132,18 +134,24 @@ static uint8_t *vis_recv_buff;
 static void DecodeVision(uint16_t recv_len)
 {
   // 1️⃣ 判断是不是 NUC 的裸包
-  if (recv_len == sizeof(VisionRecvPacket) && vis_recv_buff[0] == 0xA5)
+  if (recv_len == sizeof(VisionRecvPacket) && vis_recv_buff[0] == 0xA5 && !visionGetDate)
   {
     if (Verify_CRC16_Check_Sum(vis_recv_buff, sizeof(VisionRecvPacket)))
     {
       memcpy(&recv_packet, vis_recv_buff, sizeof(VisionRecvPacket));
-//      hhSerial_Printf("NUC Packet OK: state=%d id=%d x=%.2f y=%.2f yaw=%.2f\r\n",
-//             recv_packet.state, recv_packet.id,
-//             recv_packet.x, recv_packet.y, recv_packet.yaw);
-      // TODO: 在这里用 recv_data.x/y/z/yaw 做你的逻辑
-      send_packet.aim_x = 2.0f;
-      send_packet.aim_y = 0.0f;
-      send_packet.aim_z = 0.0f;
+
+      visionGetDate = 1;
+      hhSerial_Printf("NUC Packet OK:  x=%.2f y=%.2f z=%.2f\r\n",
+             recv_packet.x, recv_packet.y, recv_packet.z);
+
+//      send_packet.aim_x = 2.0f;
+//      send_packet.aim_y = 0.0f;
+//      send_packet.aim_z = 0.0f;
+//      float *aim =solveVision(&recv_packet);
+//      send_packet.aim_x=aim[0];
+//      send_packet.aim_y=aim[1];
+//      send_packet.aim_z=aim[2];
+
     }
     else
     {
@@ -212,6 +220,7 @@ void VisionSend(){
     send_packet.header = 0x5A;
     send_packet.detect_color = 0;  //0红 1蓝
     send_packet.task_mode = 2;
+
 
 
     Append_CRC16_Check_Sum((uint8_t *)&send_packet,sizeof(send_packet));

@@ -10,6 +10,7 @@
 #include "dji_motor.h"
 #include "bmi088.h"
 #include "vofa.h"
+#include "slovetrajectory.h"
 // bsp
 #include "bsp_dwt.h"
 #include "bsp_log.h"
@@ -388,6 +389,15 @@ void RobotCMDTask()
 
 
 //    Vofa_Send();//调试使用
+    if (visionGetDate){
+      float *aim =solveVision(&recv_packet);
+            send_packet.aim_x=aim[0];
+            send_packet.aim_y=aim[1];
+            send_packet.aim_z=aim[2];
+            visionGetDate =0;
+    }
+
+
 
 
     EmergencyHandler(); // 处理模块离线和遥控器急停等紧急情况

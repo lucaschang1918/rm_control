@@ -244,19 +244,16 @@ void autoSolveTrajectory(float *pitch, float *yaw, float *aim_x, float *aim_y, f
 void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, float *aim_z)
 {
   float armor_x = 0.f, armor_y = 0.f, armor_z = 0.f;
+
   // 线性预测
   float timeDelay = st.bias_time/1000.0 + t;
   st.tar_yaw += st.v_yaw * timeDelay;
 
-  //计算四块装甲板的位置
-  //装甲板id顺序，以四块装甲板为例，逆时针编号
-  //      2
-  //   3     1
-  //      0
   int use_1 = 1;
   int i = 0;
   int idx = 0; // 选择的装甲板
   float allow_fire_ang_max = 0.f, allow_fire_ang_min = 0.f;
+
   //armor_num = ARMOR_NUM_BALANCE 为平衡步兵
   if (st.armor_num == ARMOR_NUM_BALANCE) {
     for (i = 0; i<2; i++) {
@@ -269,6 +266,7 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
     }
 
     float yaw_diff_min = fabsf(*yaw - tar_position[0].yaw);
+    idx = 0;
 
     //因为是平衡步兵 只需判断两块装甲板即可
     float temp_yaw_diff = fabsf(*yaw - tar_position[1].yaw);
@@ -278,6 +276,10 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
       idx = 1;
     }
 
+    // *** 修复：为平衡步兵模式赋值 aim ***
+    *aim_x = tar_position[idx].x;
+    *aim_y = tar_position[idx].y;
+    *aim_z = tar_position[idx].z;
 
   } else if (st.armor_num == ARMOR_NUM_OUTPOST) {  //前哨站
     for (i = 0; i<3; i++) {
@@ -289,27 +291,39 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
       tar_position[i].yaw = tmp_yaw;
     }
 
-    //TODO 选择最优装甲板 选板逻辑你们自己写，这个一般给英雄用
+    // *** 修复：为前哨站模式赋值 aim（这里简单选择第一个装甲板，你可以自己优化选板逻辑）***
+    idx = 0;
+    float yaw_diff_min = fabsf(*yaw - tar_position[0].yaw);
+    for (i = 1; i < 3; i++) {
+      float temp_yaw_diff = fabsf(*yaw - tar_position[i].yaw);
+      if (temp_yaw_diff < yaw_diff_min) {
+        yaw_diff_min = temp_yaw_diff;
+        idx = i;
+      }
+    }
 
+    *aim_x = tar_position[idx].x;
+    *aim_y = tar_position[idx].y;
+    *aim_z = tar_position[idx].z;
 
   } else {
-
-    // 根据目标速度预测其未来的位置
-    //				st.xw = st.xw + timeDelay * st.vxw;
-    //				st.yw = st.yw + timeDelay * st.vyw;
-    //				st.zw = st.zw + timeDelay * st.vzw;
-
+    // 普通模式（4装甲板等）
     float predict_yaw =  st.tar_yaw + timeDelay * st.v_yaw;
-    float center_theta = atan2(*aim_y, *aim_x);//全向弹道偏右如无可不加
-    float diff_angle = 2 * PI / st.armor_num; // 计算装甲板之间的角度间隔
+    float center_theta = atan2(*aim_y, *aim_x);
+    float diff_angle = 2 * PI / st.armor_num;
     use_1 = 1;
-    for (i = 0; i<4; i++) {
-      float tmp_yaw = st.tar_yaw + i * diff_angle;// 计算当前装甲板的预测偏航角
-      float yaw_diff = get_delta_ang_pi(tmp_yaw, center_theta);// 计算装甲板与中心的角度差
-      if (fabsf(yaw_diff) < diff_angle / 2) {
-        armor_choose = 1; // 记录选中的装甲板
 
-        // 计算装甲板的半径和Z轴高度（适用于4装甲板的情况）
+    // *** 修复：添加默认值，防止循环没有匹配时返回0 ***
+    int found = 0;
+
+    for (i = 0; i<4; i++) {
+      float tmp_yaw = st.tar_yaw + i * diff_angle;
+      float yaw_diff = get_delta_ang_pi(tmp_yaw, center_theta);
+
+      if (fabsf(yaw_diff) < diff_angle / 2) {
+        found = 1;
+        armor_choose = 1;
+
         float r = st.r1;
         armor_z = st.zw;
 
@@ -318,28 +332,21 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
           armor_z = use_1 ? st.zw : (st.zw + st.dz);
         }
 
-
-        // 计算装甲板的X、Y坐标
         armor_x = st.xw - r * cos(tmp_yaw);
         armor_y = st.yw - r * sin(tmp_yaw);
 
-        // 计算目标角度变化率，估算最佳射击点
         float armor_z_next = st.zw;
         if (st.armor_num == 4) {
           r = !use_1 ? st.r1 : st.r2;
           armor_z_next = !use_1 ? st.zw : (st.zw + st.dz);
         }
 
-        // 计算下一个装甲板的偏航角
         float next_armor_yaw = tmp_yaw - sign(st.v_yaw) * diff_angle;
-
-        // 计算下一个装甲板的位置
         float armor_x_next = st.xw - r * cos(next_armor_yaw);
         float armor_y_next = st.yw - r * sin(next_armor_yaw);
-        // 计算当前和下一个装甲板的偏航角变化
+
         float yaw_motor_delta = get_delta_ang_pi(atan2(armor_y, armor_x),
                                                  atan2(armor_y_next, armor_x_next));
-        // 计算由于目标旋转导致的提前角度
         float angle_of_advance = fabsf(yaw_motor_delta) / YAW_MOTOR_RES_SPEED * fabsf(st.v_yaw) / 2;
 
         float est_yaw;
@@ -354,7 +361,7 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
           *aim_z = armor_z_next;
           est_yaw = next_armor_yaw;
         }
-        // 计算允许射击的角度范围
+
         float armor_w;
         if ( st.armor_id == 1)
           armor_w = LARGE_ARMOR_WIDTH;
@@ -366,20 +373,25 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
         float bx = *aim_x + 0.5f * armor_w * sin(est_yaw);
         float by = *aim_y - 0.5f * armor_w * cos(est_yaw);
 
-        // 计算装甲板边界角度
         float angle_a = atan2(ay, ax);
         float angle_b = atan2(by, bx);
         float angle_c = atan2(*aim_y, *aim_x );
 
-        // 计算允许射击的角度范围
         allow_fire_ang_max = angle_c - angle_b;
         allow_fire_ang_min = angle_c - angle_a;
 
-        break; // 找到最佳攻击点后退出循环
+        break;
       } else {
         armor_choose = 0;
       }
-      use_1 = !use_1; // 切换装甲板（适用于4装甲板的情况）
+      use_1 = !use_1;
+    }
+
+    // *** 修复：如果没有找到合适的装甲板，使用目标中心位置 ***
+    if (!found) {
+      *aim_x = st.xw;
+      *aim_y = st.yw;
+      *aim_z = st.zw;
     }
   }
 
@@ -387,7 +399,7 @@ void autoSolveTrajectory2(float *pitch, float *yaw, float *aim_x, float *aim_y, 
                                         *aim_z - st.z_bias , st.current_v);
   *yaw = (float)(atan2(*aim_y, *aim_x)+0.02);
   yaw_ang_ref=*yaw;
-  // 控制射击
+
   fire_ctrl(allow_fire_ang_max, allow_fire_ang_min);
 }
 
@@ -417,4 +429,40 @@ float get_delta_ang_pi(float ang1, float ang2) {
   while (diff > PI) diff -= 2 * PI;
   while (diff < -PI) diff += 2 * PI;
   return diff;
+}
+
+
+
+float *solveVision(const VisionRecvPacket *recv_packet)
+{
+  static float ret[3];  // 注意：static 保存在静态区，不会被销毁
+
+  if (recv_packet == NULL)
+    return ret;
+
+  st.xw = recv_packet->x;
+  st.yw = recv_packet->y;
+  st.zw = recv_packet->z;
+  st.vxw = recv_packet->vx;
+  st.vyw = recv_packet->vy;
+  st.vzw = recv_packet->vz;
+  st.tar_yaw = recv_packet->yaw;
+  st.v_yaw   = recv_packet->v_yaw;
+  st.r1 = recv_packet->r1;
+  st.r2 = recv_packet->r2;
+  st.dz = recv_packet->dz;
+  st.armor_id  = recv_packet->id;
+  st.armor_num = recv_packet->armors_num;
+
+  float pitch_rad = 0.0f, yaw_rad = 0.0f;
+  float aimx = 0.0f, aimy = 0.0f, aimz = 0.0f;
+  autoSolveTrajectory2(&pitch_rad, &yaw_rad, &aimx, &aimy, &aimz);
+
+  hhSerial_Printf("Solve result: aim_x=%.3f aim_y=%.3f aim_z=%.3f\n",
+                  aimx, aimy, aimz);
+
+  ret[0] = aimx;
+  ret[1] = aimy;
+  ret[2] = aimz;
+  return ret;
 }

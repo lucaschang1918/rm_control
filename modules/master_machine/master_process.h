@@ -179,7 +179,7 @@ typedef struct
 
 
 
-
+extern uint8_t visionGetDate;
 
 typedef struct SendPacket_{
   uint8_t header;
@@ -195,9 +195,9 @@ typedef struct SendPacket_{
   uint16_t checksum;
 }__attribute((packed)) SendPacket;
 
+extern  SendPacket send_packet;
 
-
-
+extern  VisionRecvPacket recv_packet;
 extern float Vison_Frequency; // 视觉数据频率
 
 

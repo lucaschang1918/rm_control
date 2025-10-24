@@ -1,5 +1,8 @@
 #ifndef __SOLVETRAJECTORY_H__
 #define __SOLVETRAJECTORY_H__
+
+#include "master_process.h"
+#include "bsp_log.h"
 #ifndef PI
 #define PI 3.1415926535f
 #endif
@@ -20,9 +23,9 @@ enum ARMOR_ID
 
 enum ARMOR_NUM
 {
-  ARMOR_NUM_BALANCE = 2,
-  ARMOR_NUM_OUTPOST = 3,
-  ARMOR_NUM_NORMAL = 4
+  ARMOR_NUM_BALANCE = 3,
+  ARMOR_NUM_OUTPOST = 5,
+  ARMOR_NUM_NORMAL = 1
 };
 
 enum BULLET_TYPE
@@ -94,5 +97,5 @@ extern unsigned char suggest_fire;
 extern float aim_x1, aim_y1, aim_z1,imu_yaw;
 
 void initSTValue(void);
-
+float *solveVision(const VisionRecvPacket *recv_packet);
 #endif /*__SOLVETRAJECTORY_H__*/
