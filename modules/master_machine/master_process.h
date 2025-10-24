@@ -138,6 +138,35 @@ typedef struct ReceiverPacket_{
 
 }__attribute__((packed)) ReceiverPacket;
 
+typedef struct
+{
+  uint8_t header;
+  union {
+    struct {
+      uint8_t state : 1;
+      uint8_t id : 3;
+      uint8_t armors_num : 3;
+      uint8_t reserved : 1;
+    };
+    uint8_t flag;
+  };
+  float x;
+  float y;
+  float z;
+  float yaw;
+  float vx;
+  float vy;
+  float vz;
+  float v_yaw;
+  float r1;
+  float r2;
+  float dz;
+  uint16_t checksum;
+} __attribute__((packed)) VisionRecvPacket;
+
+
+
+
 
 typedef struct SendPacket_{
   uint8_t header;

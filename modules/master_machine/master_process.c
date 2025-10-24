@@ -20,9 +20,9 @@ static Vision_Send_s send_data;
 static DaemonInstance *vision_daemon_instance;
 //=================================================
 //电专通信
-static ReceiverPacket rece_packet;
+//static ReceiverPacket rece_packet;
 static SendPacket send_packet;
-
+static VisionRecvPacket recv_packet;
 
 void VisionSetFlag(Enemy_Color_e enemy_color, Work_Mode_e work_mode, Bullet_Speed_e bullet_speed)
 {
@@ -122,13 +122,42 @@ static uint8_t *vis_recv_buff;
 //    // TODO: code to resolve flag_register;
 //}
 
+//static void DecodeVision(uint16_t recv_len)
+//{
+//  uint16_t flag_register;
+//  get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
+//  // TODO: code to resolve flag_register;
+//}
+
 static void DecodeVision(uint16_t recv_len)
 {
-  uint16_t flag_register;
-  get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
-  // TODO: code to resolve flag_register;
-}
+  // 1️⃣ 判断是不是 NUC 的裸包
+  if (recv_len == sizeof(VisionRecvPacket) && vis_recv_buff[0] == 0xA5)
+  {
+    if (Verify_CRC16_Check_Sum(vis_recv_buff, sizeof(VisionRecvPacket)))
+    {
+      memcpy(&recv_packet, vis_recv_buff, sizeof(VisionRecvPacket));
+      hhSerial_Printf("NUC Packet OK: state=%d id=%d x=%.2f y=%.2f yaw=%.2f\r\n",
+             recv_packet.state, recv_packet.id,
+             recv_packet.x, recv_packet.y, recv_packet.yaw);
+      // TODO: 在这里用 recv_data.x/y/z/yaw 做你的逻辑
+    }
+    else
+    {
+      hhSerial_Printf("NUC Packet CRC Error\r\n");
+    }
+    return;
+  }
 
+  // 2️⃣ 否则走原本的协议解析
+  uint16_t flag_register;
+  uint16_t cmd_id = get_protocol_info(vis_recv_buff, &flag_register, (uint8_t *)&recv_data.pitch);
+  if (cmd_id != 0)
+  {
+    // 旧协议的逻辑
+    printf("Legacy Protocol Packet OK, cmd=%04x\r\n", cmd_id);
+  }
+}
 
 
 

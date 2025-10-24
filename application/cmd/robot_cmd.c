@@ -387,7 +387,7 @@ void RobotCMDTask()
     }
 
 
-    Vofa_Send();//调试使用
+//    Vofa_Send();//调试使用
 
 
     EmergencyHandler(); // 处理模块离线和遥控器急停等紧急情况
