@@ -140,18 +140,16 @@ typedef struct ReceiverPacket_{
 
 
 typedef struct SendPacket_{
-  uint8_t header;             //0x5A
-  uint8_t detect_color : 1;   //0红  1蓝
+  uint8_t header;
+  uint8_t detect_color : 1; // 0-red 1-blue
   uint8_t task_mode : 2;
-
+  uint8_t reserved : 5;
+  float roll;
+  float pitch;
+  float yaw;
   float aim_x;
   float aim_y;
   float aim_z;
-
-  float roll;
-  float pitch ;
-  float yaw ;
-
   uint16_t checksum;
 }__attribute((packed)) SendPacket;
 
